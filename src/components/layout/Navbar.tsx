@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
-
+import { Link } from "react-router-dom";
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
 
@@ -15,13 +15,13 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* Logo */}
-        <a href="/" className="flex items-center">
+        <Link to="/" className="flex items-center">
           <img
             src="/researchmate-logo.png"
             alt="ResearchMate"
             className="h-10 w-auto object-contain"
           />
-        </a>
+        </Link>
 
         {/* Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
