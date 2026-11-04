@@ -8,6 +8,8 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
+import CreateResearchPage from "./pages/CreateResearchPage";
+import ResearchProjectsPage from "./pages/ResearchProjectPage";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
           {/* Only authenticated users */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/research/new" element={<CreateResearchPage/>}/>
+            <Route path="/research" element={<ResearchProjectsPage/>}/>
           </Route>
         </Routes>
       </div>
