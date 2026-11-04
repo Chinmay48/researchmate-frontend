@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { CreateProjectRequest, CreateSessionRequest, ResearchProject, ResearchSession } from "../types/research";
+import type { CreateProjectRequest, CreateSessionRequest, ResearchProject, ResearchSession, SessionWorkspace } from "../types/research";
 export const createProject=async(
     request:CreateProjectRequest
 ):Promise<void>=>{
@@ -27,3 +27,14 @@ export const createSession=async(projectId:string,request:CreateSessionRequest):
     const response=await api.post<ResearchSession>(`/projects/${projectId}/sessions`,request);
     return response.data;
 }
+
+export const getSessionWorkspace = async (
+  projectId: string,
+  sessionId: string
+): Promise<SessionWorkspace> => {
+  const response = await api.get<SessionWorkspace>(
+    `/projects/${projectId}/sessions/${sessionId}/workspace`
+  );
+
+  return response.data;
+};

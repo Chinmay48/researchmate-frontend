@@ -11,6 +11,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CreateResearchPage from "./pages/CreateResearchPage";
 import ResearchProjectsPage from "./pages/ResearchProjectPage";
 import ProjectWorkspacePage from "./pages/ProjectWorkspacePage";
+import SessionWorkspacePage from "./pages/SessionWorkspacePage";
 
 function App() {
   return (
@@ -37,6 +38,10 @@ function App() {
               path="/research/:projectId"
               element={<ProjectWorkspacePage />}
             />
+            <Route
+  path="/research/:projectId/sessions/:sessionId"
+  element={<SessionWorkspacePage />}
+/>
           </Route>
         </Routes>
       </div>
