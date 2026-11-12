@@ -1,15 +1,23 @@
 
 import { BookOpen } from "lucide-react";
+
 import type { SearchType, SessionPaper } from "../../types/research";
 import PaperCard from "./PaperCard";
+
 interface PaperExplorerProps {
   papers: SessionPaper[];
   searchType: SearchType;
+  selectedPaperIds: string[];
+  onTogglePaper: (paperId: string) => void;
+  selectionDisabled: boolean;
 }
 
 export default function PaperExplorer({
   papers,
   searchType,
+  selectedPaperIds,
+  onTogglePaper,
+  selectionDisabled,
 }: PaperExplorerProps) {
   return (
     <section>
@@ -47,12 +55,15 @@ export default function PaperExplorer({
       ) : (
         <div className="space-y-4">
           {papers.map((paper) => (
-  <PaperCard
-    key={paper.id}
-    paper={paper}
-    searchType={searchType}
-  />
-))}
+            <PaperCard
+              key={paper.id}
+              paper={paper}
+              searchType={searchType}
+              selected={selectedPaperIds.includes(paper.id)}
+              onToggleSelection={onTogglePaper}
+              selectionDisabled={selectionDisabled}
+            />
+          ))}
         </div>
       )}
     </section>
