@@ -12,8 +12,9 @@ import {
   updateChatPaperSelection,
   generateAnswer,
 } from "../services/chatService";
-
+import MarkdownMessage from "../components/chat/MarkdownMessage";
 import type { SessionWorkspace } from "../types/research";
+import NewChatDialog from "../components/chat/NewChatDialog";
 import type {
   Chat,
   ChatMessage,
@@ -54,6 +55,8 @@ const SessionWorkspacePage = () => {
   const [question, setQuestion] = useState("");
   const [answerMode, setAnswerMode] = useState<AnswerMode>("RESEARCH_GROUNDED");
   const [generating, setGenerating] = useState(false);
+
+  const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
   // Fetch session workspace
   useEffect(() => {
     let cancelled = false;
@@ -183,27 +186,28 @@ const SessionWorkspacePage = () => {
   }, [activeChatId]);
 
   // Create a new chat
-  const handleCreateChat = async () => {
-    if (!sessionId || creatingChat) return;
+ const handleCreateChat = async (title: string) => {
+  if (!sessionId || creatingChat) return;
 
-    setCreatingChat(true);
+  setCreatingChat(true);
 
-    try {
-      const request: CreateChatRequest = {
-        title: "New Chat",
-      };
+  try {
+    const request: CreateChatRequest = {
+      title: title || null,
+    };
 
-      const newChat = await createChat(sessionId, request);
+    const newChat = await createChat(sessionId, request);
 
-      setChats((previous) => [...previous, newChat]);
-      setActiveChatId(newChat.id);
-    } catch (error) {
-      console.error("Failed to create chat:", error);
-      showError("Failed to create a new conversation.");
-    } finally {
-      setCreatingChat(false);
-    }
-  };
+    setChats((previous) => [...previous, newChat]);
+    setActiveChatId(newChat.id);
+    setIsNewChatDialogOpen(false);
+  } catch (error) {
+    console.error("Failed to create chat:", error);
+    showError("Failed to create a new conversation.");
+  } finally {
+    setCreatingChat(false);
+  }
+};
   const handleGenerateAnswer = async () => {
     const trimmedQuestion = question.trim();
 
@@ -318,14 +322,16 @@ const SessionWorkspacePage = () => {
             </div>
 
             <button
-              type="button"
-              onClick={handleCreateChat}
-              disabled={creatingChat || chatsLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus size={17} />
-              {creatingChat ? "Creating..." : "New Chat"}
-            </button>
+  type="button"
+  onClick={() => setIsNewChatDialogOpen(true)}
+  disabled={creatingChat || chatsLoading}
+  className="inline-flex items-center gap-2 rounded-xl bg-cyan-600
+    px-4 py-2.5 text-sm font-semibold text-white transition
+    hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  <Plus size={17} />
+  New Chat
+</button>
           </div>
 
           {/* Chat list */}
@@ -511,9 +517,9 @@ const SessionWorkspacePage = () => {
                           {message.answerMode && ` • ${message.answerMode}`}
                         </p>
 
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
-                          {message.content}
-                        </p>
+                       <div className="mt-3">
+  <MarkdownMessage content={message.content} />
+</div>
 
                         {message.sources.length > 0 && (
                           <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-700">
@@ -555,6 +561,12 @@ const SessionWorkspacePage = () => {
           />
         </div>
       </div>
+      <NewChatDialog
+  isOpen={isNewChatDialogOpen}
+  creating={creatingChat}
+  onClose={() => setIsNewChatDialogOpen(false)}
+  onCreate={handleCreateChat}
+/>
     </div>
   );
 };
