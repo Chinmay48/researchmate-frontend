@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Plus, MessageSquare } from "lucide-react";
 
 import { getSessionWorkspace } from "../services/researchService";
-
 import {
   createChat,
   getSessionChats,
@@ -12,9 +10,7 @@ import {
   updateChatPaperSelection,
   generateAnswer,
 } from "../services/chatService";
-import MarkdownMessage from "../components/chat/MarkdownMessage";
 import type { SessionWorkspace } from "../types/research";
-import NewChatDialog from "../components/chat/NewChatDialog";
 import type {
   Chat,
   ChatMessage,
@@ -23,8 +19,8 @@ import type {
 } from "../types/chat";
 
 import { showError } from "../lib/toast";
-import SessionHeader from "../components/session/SessionHeader";
-import PaperExplorer from "../components/session/PaperExplorer";
+import { ChatSidebar } from "../components/chat/ChatSidebar";
+import ChatWindow from "../components/chat/ChatWindow";
 
 const SessionWorkspacePage = () => {
   const { projectId, sessionId } = useParams<{
@@ -50,13 +46,16 @@ const SessionWorkspacePage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatDetailsLoading, setChatDetailsLoading] = useState(false);
 
-  // Paper selection saving state
+  // Paper selection & answer generation state
   const [savingSelection, setSavingSelection] = useState(false);
   const [question, setQuestion] = useState("");
   const [answerMode, setAnswerMode] = useState<AnswerMode>("RESEARCH_GROUNDED");
   const [generating, setGenerating] = useState(false);
 
+  // Dialog & mobile sidebar drawer state
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // Fetch session workspace
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +152,7 @@ const SessionWorkspacePage = () => {
       setSavedSelectedPaperIds([]);
       setMessages([]);
       setQuestion("");
+
       try {
         const [selectionData, messageData] = await Promise.all([
           getChatPaperSelection(activeChatId),
@@ -186,28 +186,30 @@ const SessionWorkspacePage = () => {
   }, [activeChatId]);
 
   // Create a new chat
- const handleCreateChat = async (title: string) => {
-  if (!sessionId || creatingChat) return;
+  const handleCreateChat = async (title: string) => {
+    if (!sessionId || creatingChat) return;
 
-  setCreatingChat(true);
+    setCreatingChat(true);
 
-  try {
-    const request: CreateChatRequest = {
-      title: title || null,
-    };
+    try {
+      const request: CreateChatRequest = {
+        title: title || null,
+      };
 
-    const newChat = await createChat(sessionId, request);
+      const newChat = await createChat(sessionId, request);
 
-    setChats((previous) => [...previous, newChat]);
-    setActiveChatId(newChat.id);
-    setIsNewChatDialogOpen(false);
-  } catch (error) {
-    console.error("Failed to create chat:", error);
-    showError("Failed to create a new conversation.");
-  } finally {
-    setCreatingChat(false);
-  }
-};
+      setChats((previous) => [...previous, newChat]);
+      setActiveChatId(newChat.id);
+      setIsNewChatDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to create chat:", error);
+      showError("Failed to create a new conversation.");
+    } finally {
+      setCreatingChat(false);
+    }
+  };
+
+  // Generate an AI answer for the active chat
   const handleGenerateAnswer = async () => {
     const trimmedQuestion = question.trim();
 
@@ -226,10 +228,10 @@ const SessionWorkspacePage = () => {
         answerMode,
       });
 
-      // Fetch persisted messages from the backend.
+      // Fetch persisted messages from the backend
       const updatedMessages = await getChatMessages(chatId);
 
-      // Don't overwrite another chat if the user switched meanwhile.
+      // Don't overwrite another chat if the user switched meanwhile
       if (activeChatId === chatId) {
         setMessages(updatedMessages);
         setQuestion("");
@@ -241,10 +243,11 @@ const SessionWorkspacePage = () => {
       setGenerating(false);
     }
   };
+
   // Derive the active chat from the chat list
   const activeChat = chats.find((chat) => chat.id === activeChatId) ?? null;
 
-  // Toggle paper selection
+  // Toggle paper selection for the active chat
   const handleTogglePaper = (paperId: string) => {
     setSelectedPaperIds((previous) =>
       previous.includes(paperId)
@@ -280,8 +283,8 @@ const SessionWorkspacePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="text-gray-600 dark:text-gray-300">
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-sm text-slate-600 dark:text-slate-300">
           Loading workspace...
         </div>
       </div>
@@ -290,14 +293,14 @@ const SessionWorkspacePage = () => {
 
   if (!workspace) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 dark:bg-gray-950">
-        <p className="text-gray-600 dark:text-gray-300">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Unable to load this session.
         </p>
 
         <Link
           to={projectId ? `/research/${projectId}` : "/research"}
-          className="text-blue-600 hover:underline"
+          className="text-sm font-medium text-cyan-600 hover:underline dark:text-cyan-400"
         >
           Go back
         </Link>
@@ -306,267 +309,47 @@ const SessionWorkspacePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <SessionHeader workspace={workspace} />
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      {/* Left Sidebar (~25% on desktop, slide-over drawer on mobile) */}
+      <ChatSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        chats={chats}
+        activeChatId={activeChatId}
+        chatsLoading={chatsLoading}
+        onSelectChat={setActiveChatId}
+        isNewChatDialogOpen={isNewChatDialogOpen}
+        creatingChat={creatingChat}
+        onOpenNewChatDialog={() => setIsNewChatDialogOpen(true)}
+        onCloseNewChatDialog={() => setIsNewChatDialogOpen(false)}
+        onCreateChat={handleCreateChat}
+        papers={workspace.papers}
+        selectedPaperIds={selectedPaperIds}
+        hasUnsavedSelection={hasUnsavedSelection}
+        savingSelection={savingSelection}
+        selectionDisabled={chatDetailsLoading}
+        onTogglePaper={handleTogglePaper}
+        onSaveSelection={handleSaveSelection}
+      />
 
-        {/* Chat management */}
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold">AI Conversations</h2>
-
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Create and manage conversations for this research session.
-              </p>
-            </div>
-
-            <button
-  type="button"
-  onClick={() => setIsNewChatDialogOpen(true)}
-  disabled={creatingChat || chatsLoading}
-  className="inline-flex items-center gap-2 rounded-xl bg-cyan-600
-    px-4 py-2.5 text-sm font-semibold text-white transition
-    hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
->
-  <Plus size={17} />
-  New Chat
-</button>
-          </div>
-
-          {/* Chat list */}
-          <div className="mt-5 flex flex-wrap gap-3">
-            {chatsLoading ? (
-              <p className="text-sm text-slate-500">Loading conversations...</p>
-            ) : chats.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                No conversations yet. Create your first chat.
-              </p>
-            ) : (
-              chats.map((chat) => (
-                <button
-                  key={chat.id}
-                  type="button"
-                  onClick={() => setActiveChatId(chat.id)}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                    activeChatId === chat.id
-                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  }`}
-                >
-                  <MessageSquare size={16} />
-                  {chat.title || "Untitled Chat"}
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* Active chat information */}
-          {activeChat && (
-            <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Active conversation
-              </p>
-
-              <h3 className="mt-1 font-semibold">
-                {activeChat.title || "Untitled Chat"}
-              </h3>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Chat ID: {activeChat.id}
-              </p>
-            </div>
-          )}
-
-          {/* Chat-specific details */}
-          {chatDetailsLoading ? (
-            <p className="mt-4 text-sm text-slate-500">
-              Loading conversation details...
-            </p>
-          ) : activeChat ? (
-            <div className="mt-5 space-y-5">
-              {/* Selected papers */}
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="font-semibold">
-                    Selected Papers ({selectedPaperIds.length})
-                  </h4>
-
-                  <button
-                    type="button"
-                    onClick={handleSaveSelection}
-                    disabled={
-                      !hasUnsavedSelection ||
-                      savingSelection ||
-                      chatDetailsLoading ||
-                      !activeChatId
-                    }
-                    className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {savingSelection ? "Saving..." : "Save Selection"}
-                  </button>
-                </div>
-
-                {selectedPaperIds.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">
-                    No papers selected for this chat.
-                  </p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {selectedPaperIds.map((paperId) => {
-                      const paper = workspace.papers.find(
-                        (p) => p.id === paperId,
-                      );
-
-                      return (
-                        <li
-                          key={paperId}
-                          className="text-sm text-slate-600 dark:text-slate-300"
-                        >
-                          {paper?.title ?? paperId}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-
-                {hasUnsavedSelection && (
-                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                    You have unsaved paper selection changes.
-                  </p>
-                )}
-              </div>
-
-              {/* Conversation history */}
-              <div>
-                <h4 className="font-semibold">
-                  Conversation History ({messages.length})
-                </h4>
-
-                {/* Question composer */}
-                <div className="border-t border-slate-100 pt-5 dark:border-slate-800">
-                  <h4 className="font-semibold">Ask ResearchMate</h4>
-
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Ask questions about the papers selected for this
-                    conversation.
-                  </p>
-
-                  <textarea
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Ask a question about your selected research papers..."
-                    rows={4}
-                    disabled={generating || chatDetailsLoading}
-                    className="mt-3 w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-cyan-950"
-                  />
-
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <select
-                      value={answerMode}
-                      onChange={(e) =>
-                        setAnswerMode(e.target.value as AnswerMode)
-                      }
-                      disabled={generating}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    >
-                      <option value="RESEARCH_GROUNDED">
-                        Research Grounded
-                      </option>
-
-                      <option value="AI_ENHANCED">AI Enhanced</option>
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={handleGenerateAnswer}
-                      disabled={
-                        !question.trim() ||
-                        generating ||
-                        chatDetailsLoading ||
-                        !activeChatId
-                      }
-                      className="rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {generating ? "Generating..." : "Generate Answer"}
-                    </button>
-                  </div>
-
-                  {selectedPaperIds.length === 0 && (
-                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                      No papers are selected for this chat. Select and save
-                      papers if you want answers grounded in your research
-                      documents.
-                    </p>
-                  )}
-                </div>
-
-                {messages.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">
-                    No messages yet. Start a conversation.
-                  </p>
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                      >
-                        <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400">
-                          {message.role}
-                          {message.answerMode && ` • ${message.answerMode}`}
-                        </p>
-
-                       <div className="mt-3">
-  <MarkdownMessage content={message.content} />
-</div>
-
-                        {message.sources.length > 0 && (
-                          <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-700">
-                            <p className="text-xs font-semibold">Sources</p>
-
-                            {message.sources.map((source, index) => (
-                              <p
-                                key={index}
-                                className="mt-1 text-xs text-slate-500"
-                              >
-                                Paper: {source.paperId}
-                                {" • "}
-                                Page: {source.pageNumber ?? "N/A"}
-                                {" • "}
-                                {source.sectionTitle ?? "Unknown section"}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </section>
-
-        {/* Paper explorer */}
-        <div className="mt-8">
-          <PaperExplorer
-            papers={workspace.papers}
-            searchType={workspace.searchType}
-            selectedPaperIds={selectedPaperIds}
-            onTogglePaper={handleTogglePaper}
-            selectionDisabled={
-              chatDetailsLoading || savingSelection || !activeChatId
-            }
-          />
-        </div>
-      </div>
-      <NewChatDialog
-  isOpen={isNewChatDialogOpen}
-  creating={creatingChat}
-  onClose={() => setIsNewChatDialogOpen(false)}
-  onCreate={handleCreateChat}
-/>
+      {/* Main Chat Workspace (~75% on desktop) */}
+      <ChatWindow
+        projectId={projectId}
+        sessionTitle={workspace.title}
+        activeChat={activeChat}
+        papers={workspace.papers}
+        selectedPaperCount={selectedPaperIds.length}
+        hasUnsavedSelection={hasUnsavedSelection}
+        messages={messages}
+        chatDetailsLoading={chatDetailsLoading}
+        question={question}
+        answerMode={answerMode}
+        generating={generating}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
+        onQuestionChange={setQuestion}
+        onAnswerModeChange={setAnswerMode}
+        onSubmitQuestion={handleGenerateAnswer}
+      />
     </div>
   );
 };
