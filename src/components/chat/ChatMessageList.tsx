@@ -11,6 +11,7 @@ interface ChatMessageListProps {
   generating?: boolean;
   hasActiveChat: boolean;
   selectedPaperCount: number;
+  onOpenNewChatDialog: () => void;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -20,6 +21,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   generating = false,
   hasActiveChat,
   selectedPaperCount,
+  onOpenNewChatDialog,
 }) => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,16 +46,25 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   if (!hasActiveChat) {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
-        <div className="max-w-md text-center">
+        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-600 dark:border-cyan-800/60 dark:bg-cyan-950/60 dark:text-cyan-400">
             <Sparkles className="h-5 w-5" />
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            No active conversation
+            Create a chat to begin your research
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            Create a new chat from the sidebar to start asking questions about your session papers.
+            Your session found <span className="font-semibold text-slate-700 dark:text-slate-200">{papers.length}</span>{" "}
+            {papers.length === 1 ? "paper" : "papers"}. Start a new chat first so you can select which papers to include in your conversation.
           </p>
+          <button
+            type="button"
+            onClick={onOpenNewChatDialog}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-cyan-700"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Create New Chat
+          </button>
         </div>
       </div>
     );

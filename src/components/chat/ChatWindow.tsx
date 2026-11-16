@@ -19,6 +19,7 @@ interface ChatWindowProps {
   answerMode: AnswerMode;
   generating: boolean;
   onOpenSidebar: () => void;
+  onOpenNewChatDialog: () => void;
   onQuestionChange: (value: string) => void;
   onAnswerModeChange: (mode: AnswerMode) => void;
   onSubmitQuestion: () => void;
@@ -37,6 +38,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   answerMode,
   generating,
   onOpenSidebar,
+  onOpenNewChatDialog,
   onQuestionChange,
   onAnswerModeChange,
   onSubmitQuestion,
@@ -115,6 +117,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         generating={generating}
         hasActiveChat={Boolean(activeChat)}
         selectedPaperCount={selectedPaperCount}
+        onOpenNewChatDialog={onOpenNewChatDialog}
       />
 
       {/* Bottom Question Composer */}

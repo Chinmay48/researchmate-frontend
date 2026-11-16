@@ -348,6 +348,7 @@ const SessionWorkspacePage = () => {
         onOpenSidebar={() => setIsSidebarOpen(true)}
         onQuestionChange={setQuestion}
         onAnswerModeChange={setAnswerMode}
+        onOpenNewChatDialog={() => setIsNewChatDialogOpen(true)}
         onSubmitQuestion={handleGenerateAnswer}
       />
     </div>

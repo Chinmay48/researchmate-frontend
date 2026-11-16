@@ -77,8 +77,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         </div>
 
         {/* Rendered Markdown Answer */}
+      {/* Rendered Markdown Answer */}
         <div className="text-sm leading-relaxed text-slate-800 dark:text-slate-200">
-          <MarkdownMessage content={message.content} />
+          <MarkdownMessage content={message.content} papers={papers} />
         </div>
 
         {/* Resolved Paper Sources */}

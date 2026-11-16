@@ -116,14 +116,17 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <hr className="border-slate-200 dark:border-slate-800" />
 
           {/* Section B: Chat-Specific Research Papers */}
+         {/* Section B: Chat-Specific Research Papers */}
           <SidebarPaperList
             papers={papers}
             selectedPaperIds={selectedPaperIds}
             hasUnsavedChanges={hasUnsavedSelection}
             savingSelection={savingSelection}
+            hasActiveChat={Boolean(activeChatId)}
             disabled={selectionDisabled || !activeChatId}
             onTogglePaper={onTogglePaper}
             onSaveSelection={onSaveSelection}
+            onOpenNewChatDialog={onOpenNewChatDialog}
           />
         </div>
       </aside>
